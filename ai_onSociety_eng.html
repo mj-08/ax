@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Impact of Artificial Intelligence (AI) on Society — Report (ENG)</title>
+  <style>
+    body{font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin:0;padding:28px;background:#fbfbfd;color:#0f172a;line-height:1.65}
+    h1,h2{color:#0f172a}
+    button{font-size:0.95rem;padding:10px 18px;border-radius:6px;border:none;background:#3498db;color:#fff;cursor:pointer;margin:10px 0}
+    button:hover{background:#2980b9}
+    article{background:#fff;padding:18px;border-radius:12px;box-shadow:0 8px 24px rgba(15,23,42,0.04);margin-top:18px}
+  </style>
+</head>
+<body>
+  <h1>Impact of Artificial Intelligence (AI) on Society — Report</h1>
+  <button id="playBtn">▶ Read</button>
+  <button id="pauseBtn">⏸ Pause/Resume</button>
+  <button id="stopBtn">■ Stop</button>
+
+  <article id="en">
+    <h2>Executive Summary</h2>
+    <p>This report analyzes the positive and negative impacts of artificial intelligence (AI) across the economy, labor, education, healthcare, privacy, politics, and ethics, and provides recommendations on regulation, governance, and education.</p>
+
+    <h2>1. Definition and Scope</h2>
+    <p>Artificial intelligence (AI) refers to algorithms and systems designed to perform tasks involving learning, reasoning, and decision-making. This report focuses on widely used technologies such as machine learning, deep learning, natural language processing, and computer vision.</p>
+
+    <h2>2. Positive Impacts</h2>
+    <ul>
+      <li><strong>Productivity gains:</strong> Automation and optimization improve efficiency in businesses and public services.</li>
+      <li><strong>Healthcare innovation:</strong> Diagnostic support, accelerated drug discovery, and personalized care.</li>
+      <li><strong>Educational access:</strong> Personalized learning and automated tutoring systems can reduce educational disparities.</li>
+      <li><strong>Addressing social challenges:</strong> Improvements in climate modeling, traffic optimization, and disaster response.</li>
+    </ul>
+
+    <h2>3. Negative Impacts & Risks</h2>
+    <ul>
+      <li><strong>Job displacement:</strong> Automation of repetitive tasks poses risks to certain occupations.</li>
+      <li><strong>Inequality:</strong> Those with access to AI technology and data may gain disproportionate economic benefits.</li>
+      <li><strong>Privacy & surveillance:</strong> Large-scale data collection increases risks of intrusion and surveillance.</li>
+      <li><strong>Bias & discrimination:</strong> Biased training data can reproduce social discrimination.</li>
+      <li><strong>Safety & security:</strong> Malicious uses (deepfakes, automated attacks) and system failures can cause societal harm.</li>
+    </ul>
+
+    <h2>4. Legal & Ethical Considerations</h2>
+    <p>AI deployment requires clear accountability, explainability, transparency, privacy protection, and human-centered design. Regulation should balance risk management without stifling innovation.</p>
+
+    <h2>5. Policy Recommendations</h2>
+    <ol>
+      <li><strong>Reskilling & safety nets:</strong> Strengthen training programs and transition support for affected workers.</li>
+      <li><strong>Data governance:</strong> Fair data access rules and reinforced privacy protections.</li>
+      <li><strong>Ethics guidelines & regulatory sandboxes:</strong> Set explainability and accountability standards and run sandbox experiments.</li>
+      <li><strong>Inclusive AI ecosystem:</strong> Support SMEs and public sector adoption so benefits are widely shared.</li>
+    </ol>
+
+    <h2>6. Conclusion</h2>
+    <p>AI presents vast opportunities and significant challenges. To broadly share benefits and minimize risks, integrated policy, investments in education, and international cooperation are essential.</p>
+  </article>
+
+  <script>
+    const playBtn = document.getElementById('playBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const enArticle = document.getElementById('en');
+    let isPaused = false;
+
+    function getTextToRead(){
+      const nodes = enArticle.querySelectorAll('h2, p, li');
+      let text = '';
+      nodes.forEach(n => { text += '\n' + n.innerText; });
+      return text;
+    }
+
+    playBtn.addEventListener('click', ()=>{
+      speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(getTextToRead());
+      utter.lang = 'en-US';
+      speechSynthesis.speak(utter);
+      isPaused = false;
+    });
+
+    pauseBtn.addEventListener('click', ()=>{
+      if(speechSynthesis.speaking){
+        if(isPaused){
+          speechSynthesis.resume();
+          isPaused = false;
+        } else {
+          speechSynthesis.pause();
+          isPaused = true;
+        }
+      }
+    });
+
+    stopBtn.addEventListener('click', ()=>{
+      speechSynthesis.cancel();
+      isPaused = false;
+    });
+  </script>
+</body>
+</html>
