@@ -60,8 +60,8 @@ function parseRequest(text) {
 // 실제 API 연동 함수 (예: Skyscanner RapidAPI - mock 구조)
 async function fetchFlights(query) {
   // 실제 API 연동 시에는 fetch()를 사용하세요
-  // const res = await fetch("https://skyscanner-api-url", { headers: { "X-API-Key": "YOUR_KEY" } });
-  // return await res.json();
+   const res = await fetch("https://skyscanner-api-url", { headers: { "X-API-Key": "YOUR_KEY" } });
+   return await res.json();
 
   // Mock 데이터
   return [
