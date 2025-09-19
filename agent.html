@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>여행 전문 AI 에이전트</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { color: #2c3e50; }
+    .card { border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
+    button { background: #3498db; color: #fff; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #2980b9; }
+  </style>
+</head>
+<body>
+  <h1>✈️ 여행 전문 AI 에이전트</h1>
+  <p>인천 → 도쿄 왕복 항공권 & 호텔 2박 예약을 도와드릴게요!</p>
+  
+  <div class="card">
+    <h2>항공권 검색</h2>
+    <button onclick="searchFlights()">인천-도쿄 왕복 항공권 조회</button>
+    <div id="flight-results"></div>
+  </div>
+
+  <div class="card">
+    <h2>호텔 검색</h2>
+    <button onclick="searchHotels()">도쿄 2박 호텔 조회</button>
+    <div id="hotel-results"></div>
+  </div>
+
+  <script>
+    // 항공권 검색 (샘플 mock 데이터)
+    async function searchFlights() {
+      const flightResults = document.getElementById("flight-results");
+      flightResults.innerHTML = "<p>검색 중...</p>";
+
+      // 실제 API 연동 시 fetch() 사용
+      // 예: fetch("https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=ICN&destinationLocationCode=HND&departureDate=2025-10-01&returnDate=2025-10-03", { headers: { Authorization: "Bearer YOUR_API_KEY" } })
+
+      // 임시 mock 데이터
+      const mockFlights = [
+        { airline: "대한항공", price: "₩450,000", time: "인천 10:00 → 도쿄 12:30" },
+        { airline: "아시아나항공", price: "₩390,000", time: "인천 14:00 → 도쿄 16:20" }
+      ];
+
+      flightResults.innerHTML = mockFlights.map(f => `
+        <p>🛫 ${f.airline} | ${f.time} | ${f.price}</p>
+      `).join("");
+    }
+
+    // 호텔 검색 (샘플 mock 데이터)
+    async function searchHotels() {
+      const hotelResults = document.getElementById("hotel-results");
+      hotelResults.innerHTML = "<p>검색 중...</p>";
+
+      // 실제 API 연동 시 fetch() 사용
+      // 예: fetch("https://booking-com.p.rapidapi.com/v1/hotels/search?city_ids=-246227&checkin_date=2025-10-01&checkout_date=2025-10-03", { headers: { "X-RapidAPI-Key": "YOUR_API_KEY" }})
+
+      // 임시 mock 데이터
+      const mockHotels = [
+        { name: "도쿄 시티 호텔", price: "₩120,000 / 박", rating: "⭐ 4.5" },
+        { name: "신주쿠 비즈니스 호텔", price: "₩90,000 / 박", rating: "⭐ 4.0" }
+      ];
+
+      hotelResults.innerHTML = mockHotels.map(h => `
+        <p>🏨 ${h.name} | ${h.price} | ${h.rating}</p>
+      `).join("");
+    }
+  </script>
+</body>
+</html>
