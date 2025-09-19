@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>여행 AI 에이전트 - 예약2</title>
+<title>여행 AI 에이전트 (무료 연습용)</title>
 <style>
 body { font-family: Arial, sans-serif; margin: 20px; }
 h1 { color: #2c3e50; }
@@ -21,11 +21,11 @@ textarea, input { width: 100%; margin: 10px 0; padding: 8px; }
 </head>
 <body>
 
-<h1>✈️ 여행 전문 AI 에이전트</h1>
-<p>자연어로 여행 요청을 입력하거나 직접 선택하세요.</p>
+<h1>✈️ 여행 전문 AI 에이전트 (무료 연습용)</h1>
+<p>Amadeus 무료 API (항공권) + Mock 호텔 데이터</p>
 
 <div class="card">
-  <textarea id="user-request" placeholder="예: 인천에서 도쿄 2박3일 최저가 항공권과 호텔 찾아줘"></textarea>
+  <textarea id="user-request" placeholder="예: 인천에서 도쿄 2박3일 항공권과 호텔 찾아줘"></textarea>
   
   <label>출발일: <input type="date" id="depart-date"></label>
   <label>귀국일: <input type="date" id="return-date"></label>
@@ -37,6 +37,21 @@ textarea, input { width: 100%; margin: 10px 0; padding: 8px; }
 <div id="checkout"></div>
 
 <script>
+const AMADEUS_API_KEY = "YOUR_AMADEUS_API_KEY";   // 🔑 발급받은 키 입력
+const AMADEUS_API_SECRET = "YOUR_AMADEUS_API_SECRET"; // 🔑 발급받은 시크릿 입력
+let AMADEUS_ACCESS_TOKEN = "";
+
+// Amadeus 토큰 발급
+async function getAmadeusToken() {
+  const res = await fetch("https://test.api.amadeus.com/v1/security/oauth2/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `grant_type=client_credentials&client_id=${AMADEUS_API_KEY}&client_secret=${AMADEUS_API_SECRET}`
+  });
+  const data = await res.json();
+  AMADEUS_ACCESS_TOKEN = data.access_token;
+}
+
 // 요청 파싱
 function parseRequest(text) {
   const originMatch = text.match(/인천|서울|김포|부산|제주/);
@@ -48,8 +63,8 @@ function parseRequest(text) {
   const returnInput = document.getElementById("return-date").value;
 
   return {
-    origin: originMatch ? originMatch[0] : "인천",
-    destination: destinationMatch ? destinationMatch[0] : "도쿄",
+    origin: originMatch ? "ICN" : "ICN", // 인천공항 코드
+    destination: destinationMatch ? "HND" : "HND", // 도쿄 하네다
     nights: nightsMatch ? parseInt(nightsMatch[1]) : 2,
     days: daysMatch ? parseInt(daysMatch[1]) : 3,
     departDate: departInput || "2025-10-01",
@@ -57,17 +72,26 @@ function parseRequest(text) {
   };
 }
 
-// 실제 API 연동 함수 (예: Skyscanner RapidAPI - mock 구조)
+// 항공권 API 호출 (Amadeus)
 async function fetchFlights(query) {
-  // 실제 API 연동 시에는 fetch()를 사용하세요
-   const res = await fetch("https://skyscanner-api-url", { headers: { "X-API-Key": "YOUR_KEY" } });
-   return await res.json();
+  if (!AMADEUS_ACCESS_TOKEN) await getAmadeusToken();
 
-  // Mock 데이터
+  const url = `https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=${query.origin}&destinationLocationCode=${query.destination}&departureDate=${query.departDate}&returnDate=${query.returnDate}&adults=1&currencyCode=KRW&max=3`;
+
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${AMADEUS_ACCESS_TOKEN}` }
+  });
+
+  const data = await res.json();
+  return data.data || [];
+}
+
+// Mock 호텔 데이터
+function fetchHotels(query) {
   return [
-    { type: "최저가", airline: "아시아나", price: 350000, duration: "2시간20분", stops: 0, hotel: {name:"도쿄 캡슐호텔", price:70000, rating:"⭐3.5"} },
-    { type: "최단시간", airline: "대한항공", price: 420000, duration: "2시간05분", stops: 0, hotel: {name:"신주쿠 비즈니스 호텔", price:90000, rating:"⭐4.0"} },
-    { type: "최소리스크", airline: "ANA", price: 480000, duration: "2시간30분", stops: 0, hotel: {name:"도쿄 시티 호텔", price:130000, rating:"⭐4.7"} }
+    { name: "도쿄 캡슐호텔", price: 70000, rating: "⭐3.5" },
+    { name: "신주쿠 비즈니스 호텔", price: 90000, rating: "⭐4.0" },
+    { name: "도쿄 시티 호텔", price: 130000, rating: "⭐4.7" }
   ];
 }
 
@@ -78,36 +102,42 @@ async function searchCandidates() {
 
   const resultsDiv = document.getElementById("results");
   resultsDiv.innerHTML = `<p>검색 요청: ${query.origin} → ${query.destination}, ${query.nights}박 ${query.days}일 (${query.departDate} ~ ${query.returnDate})</p><h3>추천 옵션</h3>`;
-  
-  const options = await fetchFlights(query);
+
+  const flights = await fetchFlights(query);
+  const hotels = fetchHotels(query);
 
   const grid = document.createElement("div");
   grid.className = "results-grid";
 
-  options.forEach((opt) => {
+  for (let i = 0; i < Math.min(flights.length, hotels.length); i++) {
+    const flight = flights[i];
+    const hotel = hotels[i];
+
     const div = document.createElement("div");
     div.className = "option-card";
     div.innerHTML = `
-      <strong>[${opt.type}]</strong> ✈ ${opt.airline} | ${opt.duration} | ₩${opt.price.toLocaleString()} | 환승 ${opt.stops}회 <br>
-      🏨 ${opt.hotel.name} | ₩${opt.hotel.price.toLocaleString()} / 박 | ${opt.hotel.rating}
+      <strong>[옵션 ${i+1}]</strong><br>
+      ✈ ${flight.itineraries[0].segments[0].carrierCode} 항공편<br>
+      가격: ₩${parseInt(flight.price.total).toLocaleString()}<br>
+      🏨 ${hotel.name} | ₩${hotel.price.toLocaleString()} / 박 | ${hotel.rating}
     `;
-    div.onclick = () => selectOption(opt, query);
+    div.onclick = () => selectOption(flight, hotel, query);
     grid.appendChild(div);
-  });
+  }
 
   resultsDiv.appendChild(grid);
 }
 
 // 결제 화면
-function selectOption(option, query) {
+function selectOption(flight, hotel, query) {
   const checkoutDiv = document.getElementById("checkout");
-  const totalCost = option.price + option.hotel.price * query.nights;
-  
+  const totalCost = parseInt(flight.price.total) + hotel.price * query.nights;
+
   checkoutDiv.innerHTML = `
     <div class="card">
       <h3>🛒 결제 전 확인</h3>
-      <p><strong>항공편:</strong> ${option.airline} | ${option.duration} | ₩${option.price.toLocaleString()} | 환승 ${option.stops}회</p>
-      <p><strong>호텔:</strong> ${option.hotel.name} | ₩${option.hotel.price.toLocaleString()} / 박 | ${option.hotel.rating}</p>
+      <p><strong>항공편:</strong> ${flight.itineraries[0].segments[0].carrierCode} | ₩${parseInt(flight.price.total).toLocaleString()}</p>
+      <p><strong>호텔:</strong> ${hotel.name} | ₩${hotel.price.toLocaleString()} / 박 | ${hotel.rating}</p>
       <p><strong>총 예상 비용:</strong> ₩${totalCost.toLocaleString()}</p>
       <button onclick="alert('모의 결제 완료! 실제 결제는 이루어지지 않습니다.')">모의 결제 진행</button>
     </div>
