@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>여행 AI 에이전트 (무료 연습용)</title>
+<title>여행 AI 에이전트 (Amadeus + Hotelbeds)</title>
 <style>
 body { font-family: Arial, sans-serif; margin: 20px; }
 h1 { color: #2c3e50; }
@@ -21,8 +21,8 @@ textarea, input { width: 100%; margin: 10px 0; padding: 8px; }
 </head>
 <body>
 
-<h1>✈️ 여행 전문 AI 에이전트 (무료 연습용)</h1>
-<p>Amadeus 무료 API (항공권) + Mock 호텔 데이터</p>
+<h1>✈️ 여행 전문 AI 에이전트 (Amadeus + Hotelbeds)</h1>
+<p>Amadeus(항공권) + Hotelbeds(호텔 가격 포함)</p>
 
 <div class="card">
   <textarea id="user-request" placeholder="예: 인천에서 도쿄 2박3일 항공권과 호텔 찾아줘"></textarea>
@@ -37,9 +37,14 @@ textarea, input { width: 100%; margin: 10px 0; padding: 8px; }
 <div id="checkout"></div>
 
 <script>
-const AMADEUS_API_KEY = "YOUR_AMADEUS_API_KEY";   // 🔑 발급받은 키 입력
-const AMADEUS_API_SECRET = "YOUR_AMADEUS_API_SECRET"; // 🔑 발급받은 시크릿 입력
+/* 🔑 Amadeus API 키 */
+const AMADEUS_API_KEY = "YOUR_AMADEUS_API_KEY";
+const AMADEUS_API_SECRET = "YOUR_AMADEUS_API_SECRET";
 let AMADEUS_ACCESS_TOKEN = "";
+
+/* 🔑 Hotelbeds API 키 */
+const HOTELBEDS_API_KEY = "YOUR_HOTELBEDS_API_KEY";
+const HOTELBEDS_SECRET = "YOUR_HOTELBEDS_SECRET";  // 테스트용도 제공됨
 
 // Amadeus 토큰 발급
 async function getAmadeusToken() {
@@ -63,8 +68,8 @@ function parseRequest(text) {
   const returnInput = document.getElementById("return-date").value;
 
   return {
-    origin: originMatch ? "ICN" : "ICN", // 인천공항 코드
-    destination: destinationMatch ? "HND" : "HND", // 도쿄 하네다
+    origin: originMatch ? "ICN" : "ICN",
+    destination: destinationMatch ? "HND" : "HND",
     nights: nightsMatch ? parseInt(nightsMatch[1]) : 2,
     days: daysMatch ? parseInt(daysMatch[1]) : 3,
     departDate: departInput || "2025-10-01",
@@ -72,7 +77,7 @@ function parseRequest(text) {
   };
 }
 
-// 항공권 API 호출 (Amadeus)
+// 항공권 API (Amadeus)
 async function fetchFlights(query) {
   if (!AMADEUS_ACCESS_TOKEN) await getAmadeusToken();
 
@@ -86,13 +91,34 @@ async function fetchFlights(query) {
   return data.data || [];
 }
 
-// Mock 호텔 데이터
-function fetchHotels(query) {
-  return [
-    { name: "도쿄 캡슐호텔", price: 70000, rating: "⭐3.5" },
-    { name: "신주쿠 비즈니스 호텔", price: 90000, rating: "⭐4.0" },
-    { name: "도쿄 시티 호텔", price: 130000, rating: "⭐4.7" }
-  ];
+// 호텔 API (Hotelbeds Test)
+async function fetchHotels(query) {
+  const today = new Date(query.departDate);
+  const checkout = new Date(query.returnDate);
+
+  const checkinStr = today.toISOString().split("T")[0];
+  const checkoutStr = checkout.toISOString().split("T")[0];
+
+  const url = `https://api.test.hotelbeds.com/hotel-api/1.0/hotels?destinationCode=TYO&checkIn=${checkinStr}&checkOut=${checkoutStr}&occupancies=1`;
+
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Api-key": HOTELBEDS_API_KEY,
+      "X-Signature": generateSignature(),
+      "Accept": "application/json"
+    }
+  });
+
+  const data = await res.json();
+  return data.hotels ? data.hotels.hotels.slice(0, 3) : [];
+}
+
+// Hotelbeds Signature 생성
+function generateSignature() {
+  const ts = Math.floor(Date.now() / 1000);
+  const cryptoStr = HOTELBEDS_API_KEY + HOTELBEDS_SECRET + ts;
+  return CryptoJS.SHA256(cryptoStr).toString(CryptoJS.enc.Hex);
 }
 
 // 후보 검색
@@ -104,7 +130,7 @@ async function searchCandidates() {
   resultsDiv.innerHTML = `<p>검색 요청: ${query.origin} → ${query.destination}, ${query.nights}박 ${query.days}일 (${query.departDate} ~ ${query.returnDate})</p><h3>추천 옵션</h3>`;
 
   const flights = await fetchFlights(query);
-  const hotels = fetchHotels(query);
+  const hotels = await fetchHotels(query);
 
   const grid = document.createElement("div");
   grid.className = "results-grid";
@@ -117,9 +143,9 @@ async function searchCandidates() {
     div.className = "option-card";
     div.innerHTML = `
       <strong>[옵션 ${i+1}]</strong><br>
-      ✈ ${flight.itineraries[0].segments[0].carrierCode} 항공편<br>
-      가격: ₩${parseInt(flight.price.total).toLocaleString()}<br>
-      🏨 ${hotel.name} | ₩${hotel.price.toLocaleString()} / 박 | ${hotel.rating}
+      ✈ 항공편: ${flight.itineraries[0].segments[0].carrierCode}<br>
+      항공 가격: ₩${parseInt(flight.price.total).toLocaleString()}<br>
+      🏨 호텔: ${hotel.name.content} | ₩${hotel.minRate.toLocaleString()} / 박
     `;
     div.onclick = () => selectOption(flight, hotel, query);
     grid.appendChild(div);
@@ -131,18 +157,22 @@ async function searchCandidates() {
 // 결제 화면
 function selectOption(flight, hotel, query) {
   const checkoutDiv = document.getElementById("checkout");
-  const totalCost = parseInt(flight.price.total) + hotel.price * query.nights;
+  const totalCost = parseInt(flight.price.total) + hotel.minRate * query.nights;
 
   checkoutDiv.innerHTML = `
     <div class="card">
       <h3>🛒 결제 전 확인</h3>
       <p><strong>항공편:</strong> ${flight.itineraries[0].segments[0].carrierCode} | ₩${parseInt(flight.price.total).toLocaleString()}</p>
-      <p><strong>호텔:</strong> ${hotel.name} | ₩${hotel.price.toLocaleString()} / 박 | ${hotel.rating}</p>
+      <p><strong>호텔:</strong> ${hotel.name.content} | ₩${hotel.minRate.toLocaleString()} / 박</p>
       <p><strong>총 예상 비용:</strong> ₩${totalCost.toLocaleString()}</p>
       <button onclick="alert('모의 결제 완료! 실제 결제는 이루어지지 않습니다.')">모의 결제 진행</button>
     </div>
   `;
 }
 </script>
+
+<!-- SHA256 생성을 위한 CryptoJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
 </body>
 </html>
