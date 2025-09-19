@@ -10,37 +10,63 @@
     .card { border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
     button { background: #3498db; color: #fff; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
     button:hover { background: #2980b9; }
+    input, select { padding: 5px; margin: 5px 0; }
   </style>
 </head>
 <body>
   <h1>✈️ 여행 전문 AI 에이전트</h1>
-  <p>인천 → 도쿄 왕복 항공권 & 호텔 2박 예약을 도와드릴게요!</p>
+  <p>출발지와 도착지를 선택해 항공권과 호텔을 검색하세요.</p>
   
   <div class="card">
     <h2>항공권 검색</h2>
-    <button onclick="searchFlights()">인천-도쿄 왕복 항공권 조회</button>
+    <label>출발지:</label>
+    <input type="text" id="origin" placeholder="예: 인천 (ICN)">
+    <br>
+    <label>도착지:</label>
+    <input type="text" id="destination" placeholder="예: 도쿄 (HND)">
+    <br>
+    <label>출발일:</label>
+    <input type="date" id="depart-date">
+    <br>
+    <label>귀국일:</label>
+    <input type="date" id="return-date">
+    <br><br>
+    <button onclick="searchFlights()">항공권 조회</button>
     <div id="flight-results"></div>
   </div>
 
   <div class="card">
     <h2>호텔 검색</h2>
-    <button onclick="searchHotels()">도쿄 2박 호텔 조회</button>
+    <label>도시:</label>
+    <input type="text" id="hotel-city" placeholder="예: 도쿄">
+    <br>
+    <label>체크인:</label>
+    <input type="date" id="checkin-date">
+    <br>
+    <label>체크아웃:</label>
+    <input type="date" id="checkout-date">
+    <br><br>
+    <button onclick="searchHotels()">호텔 조회</button>
     <div id="hotel-results"></div>
   </div>
 
   <script>
     // 항공권 검색 (샘플 mock 데이터)
     async function searchFlights() {
+      const origin = document.getElementById("origin").value || "인천 (ICN)";
+      const destination = document.getElementById("destination").value || "도쿄 (HND)";
+      const depart = document.getElementById("depart-date").value || "2025-10-01";
+      const ret = document.getElementById("return-date").value || "2025-10-03";
+
       const flightResults = document.getElementById("flight-results");
       flightResults.innerHTML = "<p>검색 중...</p>";
 
       // 실제 API 연동 시 fetch() 사용
-      // 예: fetch("https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=ICN&destinationLocationCode=HND&departureDate=2025-10-01&returnDate=2025-10-03", { headers: { Authorization: "Bearer YOUR_API_KEY" } })
+      // fetch(`https://api.amadeus.com/v2/shopping/flight-offers?originLocationCode=${origin}&destinationLocationCode=${destination}&departureDate=${depart}&returnDate=${ret}`, { headers: { Authorization: "Bearer API_KEY" } })
 
-      // 임시 mock 데이터
       const mockFlights = [
-        { airline: "대한항공", price: "₩450,000", time: "인천 10:00 → 도쿄 12:30" },
-        { airline: "아시아나항공", price: "₩390,000", time: "인천 14:00 → 도쿄 16:20" }
+        { airline: "대한항공", price: "₩450,000", time: `${origin} ${depart} → ${destination}` },
+        { airline: "아시아나항공", price: "₩390,000", time: `${origin} ${depart} → ${destination}` }
       ];
 
       flightResults.innerHTML = mockFlights.map(f => `
@@ -50,16 +76,19 @@
 
     // 호텔 검색 (샘플 mock 데이터)
     async function searchHotels() {
+      const city = document.getElementById("hotel-city").value || "도쿄";
+      const checkin = document.getElementById("checkin-date").value || "2025-10-01";
+      const checkout = document.getElementById("checkout-date").value || "2025-10-03";
+
       const hotelResults = document.getElementById("hotel-results");
       hotelResults.innerHTML = "<p>검색 중...</p>";
 
       // 실제 API 연동 시 fetch() 사용
-      // 예: fetch("https://booking-com.p.rapidapi.com/v1/hotels/search?city_ids=-246227&checkin_date=2025-10-01&checkout_date=2025-10-03", { headers: { "X-RapidAPI-Key": "YOUR_API_KEY" }})
+      // fetch(`https://booking-com.p.rapidapi.com/v1/hotels/search?city=${city}&checkin_date=${checkin}&checkout_date=${checkout}`, { headers: { "X-RapidAPI-Key": "API_KEY" } })
 
-      // 임시 mock 데이터
       const mockHotels = [
-        { name: "도쿄 시티 호텔", price: "₩120,000 / 박", rating: "⭐ 4.5" },
-        { name: "신주쿠 비즈니스 호텔", price: "₩90,000 / 박", rating: "⭐ 4.0" }
+        { name: `${city} 시티 호텔`, price: "₩120,000 / 박", rating: "⭐ 4.5" },
+        { name: `${city} 비즈니스 호텔`, price: "₩90,000 / 박", rating: "⭐ 4.0" }
       ];
 
       hotelResults.innerHTML = mockHotels.map(h => `
