@@ -11,14 +11,23 @@
     button { background: #3498db; color: #fff; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
     button:hover { background: #2980b9; }
     textarea { width: 100%; height: 80px; margin: 10px 0; }
+    select { padding: 5px; margin: 10px 0; }
   </style>
 </head>
 <body>
   <h1>✈️ 여행 전문 AI 에이전트</h1>
-  <p>자연어로 여행 요청을 입력하세요 (예: "인천에서 도쿄 왕복 2박3일 최저가 항공편과 호텔 찾아줘").</p>
+  <p>자연어로 여행 요청을 입력하세요 (예: "인천에서 도쿄 2박3일 최저가 항공편과 호텔 찾아줘").</p>
   
   <div class="card">
     <textarea id="user-request" placeholder="여행 요청을 입력하세요..."></textarea>
+    <br>
+    <label for="option">검색 옵션:</label>
+    <select id="option">
+      <option value="price">💰 최저가</option>
+      <option value="time">⏱ 최단시간</option>
+      <option value="stops">🔄 최소환승</option>
+    </select>
+    <br>
     <button onclick="processRequest()">검색하기</button>
     <div id="results"></div>
   </div>
@@ -43,33 +52,33 @@
 
     function processRequest() {
       const text = document.getElementById("user-request").value;
+      const option = document.getElementById("option").value;
       const query = parseRequest(text);
       const resultsDiv = document.getElementById("results");
       resultsDiv.innerHTML = `<p>검색 요청: ${query.origin} → ${query.destination}, ${query.nights}박 ${query.days}일</p>`;
 
-      // 가짜 항공권 데이터
-      const flights = [
-        { type: "최저가", airline: "아시아나", price: 350000, duration: "2시간20분", stops: 0 },
-        { type: "최단시간", airline: "대한항공", price: 420000, duration: "2시간05분", stops: 0 },
-        { type: "최소환승", airline: "ANA", price: 480000, duration: "2시간30분", stops: 0 }
-      ];
+      // mock 항공권 데이터
+      const flights = {
+        price: { airline: "아시아나", price: 350000, duration: "2시간20분", stops: 0 },
+        time: { airline: "대한항공", price: 420000, duration: "2시간05분", stops: 0 },
+        stops: { airline: "ANA", price: 480000, duration: "2시간30분", stops: 0 }
+      };
 
-      // 가짜 호텔 데이터
-      const hotels = [
-        { type: "최저가", name: "도쿄 캡슐호텔", price: 70000, rating: "⭐3.5" },
-        { type: "가성비", name: "신주쿠 비즈니스 호텔", price: 90000, rating: "⭐4.0" },
-        { type: "최고평점", name: "도쿄 시티 호텔", price: 130000, rating: "⭐4.7" }
-      ];
+      // mock 호텔 데이터
+      const hotels = {
+        price: { name: "도쿄 캡슐호텔", price: 70000, rating: "⭐3.5" },
+        time: { name: "신주쿠 비즈니스 호텔", price: 90000, rating: "⭐4.0" },
+        stops: { name: "도쿄 시티 호텔", price: 130000, rating: "⭐4.7" }
+      };
+
+      const selectedFlight = flights[option];
+      const selectedHotel = hotels[option];
 
       resultsDiv.innerHTML += "<h3>🛫 항공권 추천</h3>";
-      resultsDiv.innerHTML += flights.map(f =>
-        `<p>[${f.type}] ${f.airline} | ${f.duration} | ₩${f.price.toLocaleString()} | 환승 ${f.stops}회</p>`
-      ).join("");
+      resultsDiv.innerHTML += `<p>${selectedFlight.airline} | ${selectedFlight.duration} | ₩${selectedFlight.price.toLocaleString()} | 환승 ${selectedFlight.stops}회</p>`;
 
       resultsDiv.innerHTML += "<h3>🏨 호텔 추천</h3>";
-      resultsDiv.innerHTML += hotels.map(h =>
-        `<p>[${h.type}] ${h.name} | ₩${h.price.toLocaleString()} / 박 | ${h.rating}</p>`
-      ).join("");
+      resultsDiv.innerHTML += `<p>${selectedHotel.name} | ₩${selectedHotel.price.toLocaleString()} / 박 | ${selectedHotel.rating}</p>`;
     }
   </script>
 </body>
