@@ -1,37 +1,118 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>인공지능(AI)이 사회에 미치는 영향 — 보고서 (KOR/ENG)</title>
-  <style>
-    :root{--bg:#fbfbfd;--card:#fff;--muted:#6b7280;--accent:#0f172a}
-    body{font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin:0;background:var(--bg);color:var(--accent);}
-    header{background:linear-gradient(90deg,#eef2ff,#fff);padding:28px 24px;border-bottom:1px solid #e6e9f2}
-    .container{max-width:1000px;margin:28px auto;padding:0 20px}
-    h1{margin:0;font-size:1.4rem}
-    .meta{color:var(--muted);margin-top:8px;font-size:0.9rem}
-    .controls{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}
-    button, select, input{font-size:0.95rem;padding:8px 10px;border-radius:8px;border:1px solid #e2e8f0;background:var(--card);cursor:pointer}
-    .card{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 8px 24px rgba(15,23,42,0.04);margin-bottom:18px}
-    .lang-toggle{display:inline-flex;gap:6px}
-    .lang-toggle button.active{background:#111827;color:#fff}
-    article{line-height:1.65}
-    h2{margin-top:12px}
-    pre.small{white-space:pre-wrap;font-size:0.95rem;background:#f8fafc;padding:12px;border-radius:8px}
-    footer{color:var(--muted);font-size:0.85rem;padding:18px 0;text-align:center}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    @media (max-width:880px){.row{grid-template-columns:1fr} }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>여행 AI 에이전트 - 예약</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 20px; }
+h1 { color: #2c3e50; }
+.card { border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
+button { background: #3498db; color: #fff; border: none; padding: 10px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+button:hover { background: #2980b9; }
+textarea, input { width: 100%; margin: 10px 0; padding: 8px; }
+.option-card { border: 1px solid #ccc; padding: 10px; margin: 5px 0; border-radius: 5px; cursor: pointer; transition: 0.2s; }
+.option-card:hover { background: #f0f0f0; transform: scale(1.01); }
+.results-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+@media (min-width: 600px) {
+  .results-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
 </head>
 <body>
-  <header>
-    <div class="container">
-      <h1>인공지능(AI)이 사회에 미치는 영향 — 보고서 (한국어 / English)</h1>
-      <div class="meta">생성일: 2025-09-16 · 제작자: MJ</div>
-    </div>
-  </header>
 
- 
+<h1>✈️ 여행 전문 AI 에이전트</h1>
+<p>자연어로 여행 요청을 입력하거나 직접 선택하세요.</p>
+
+<div class="card">
+  <textarea id="user-request" placeholder="예: 인천에서 도쿄 2박3일 최저가 항공권과 호텔 찾아줘"></textarea>
+  
+  <label>출발일: <input type="date" id="depart-date"></label>
+  <label>귀국일: <input type="date" id="return-date"></label>
+  
+  <button onclick="searchCandidates()">검색</button>
+</div>
+
+<div id="results"></div>
+<div id="checkout"></div>
+
+<script>
+// 요청 파싱
+function parseRequest(text) {
+  const originMatch = text.match(/인천|서울|김포|부산|제주/);
+  const destinationMatch = text.match(/도쿄|오사카|뉴욕|파리|런던/);
+  const nightsMatch = text.match(/(\d)박/);
+  const daysMatch = text.match(/(\d)일/);
+
+  const departInput = document.getElementById("depart-date").value;
+  const returnInput = document.getElementById("return-date").value;
+
+  return {
+    origin: originMatch ? originMatch[0] : "인천",
+    destination: destinationMatch ? destinationMatch[0] : "도쿄",
+    nights: nightsMatch ? parseInt(nightsMatch[1]) : 2,
+    days: daysMatch ? parseInt(daysMatch[1]) : 3,
+    departDate: departInput || "2025-10-01",
+    returnDate: returnInput || "2025-10-03"
+  };
+}
+
+// 실제 API 연동 함수 (예: Skyscanner RapidAPI - mock 구조)
+async function fetchFlights(query) {
+  // 실제 API 연동 시에는 fetch()를 사용하세요
+  // const res = await fetch("https://skyscanner-api-url", { headers: { "X-API-Key": "YOUR_KEY" } });
+  // return await res.json();
+
+  // Mock 데이터
+  return [
+    { type: "최저가", airline: "아시아나", price: 350000, duration: "2시간20분", stops: 0, hotel: {name:"도쿄 캡슐호텔", price:70000, rating:"⭐3.5"} },
+    { type: "최단시간", airline: "대한항공", price: 420000, duration: "2시간05분", stops: 0, hotel: {name:"신주쿠 비즈니스 호텔", price:90000, rating:"⭐4.0"} },
+    { type: "최소리스크", airline: "ANA", price: 480000, duration: "2시간30분", stops: 0, hotel: {name:"도쿄 시티 호텔", price:130000, rating:"⭐4.7"} }
+  ];
+}
+
+// 후보 검색
+async function searchCandidates() {
+  const text = document.getElementById("user-request").value;
+  const query = parseRequest(text);
+
+  const resultsDiv = document.getElementById("results");
+  resultsDiv.innerHTML = `<p>검색 요청: ${query.origin} → ${query.destination}, ${query.nights}박 ${query.days}일 (${query.departDate} ~ ${query.returnDate})</p><h3>추천 옵션</h3>`;
+  
+  const options = await fetchFlights(query);
+
+  const grid = document.createElement("div");
+  grid.className = "results-grid";
+
+  options.forEach((opt) => {
+    const div = document.createElement("div");
+    div.className = "option-card";
+    div.innerHTML = `
+      <strong>[${opt.type}]</strong> ✈ ${opt.airline} | ${opt.duration} | ₩${opt.price.toLocaleString()} | 환승 ${opt.stops}회 <br>
+      🏨 ${opt.hotel.name} | ₩${opt.hotel.price.toLocaleString()} / 박 | ${opt.hotel.rating}
+    `;
+    div.onclick = () => selectOption(opt, query);
+    grid.appendChild(div);
+  });
+
+  resultsDiv.appendChild(grid);
+}
+
+// 결제 화면
+function selectOption(option, query) {
+  const checkoutDiv = document.getElementById("checkout");
+  const totalCost = option.price + option.hotel.price * query.nights;
+  
+  checkoutDiv.innerHTML = `
+    <div class="card">
+      <h3>🛒 결제 전 확인</h3>
+      <p><strong>항공편:</strong> ${option.airline} | ${option.duration} | ₩${option.price.toLocaleString()} | 환승 ${option.stops}회</p>
+      <p><strong>호텔:</strong> ${option.hotel.name} | ₩${option.hotel.price.toLocaleString()} / 박 | ${option.hotel.rating}</p>
+      <p><strong>총 예상 비용:</strong> ₩${totalCost.toLocaleString()}</p>
+      <button onclick="alert('모의 결제 완료! 실제 결제는 이루어지지 않습니다.')">모의 결제 진행</button>
+    </div>
+  `;
+}
+</script>
 </body>
 </html>
