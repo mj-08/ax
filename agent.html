@@ -10,90 +10,66 @@
     .card { border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
     button { background: #3498db; color: #fff; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
     button:hover { background: #2980b9; }
-    input, select { padding: 5px; margin: 5px 0; }
+    textarea { width: 100%; height: 80px; margin: 10px 0; }
   </style>
 </head>
 <body>
   <h1>✈️ 여행 전문 AI 에이전트</h1>
-  <p>출발지와 도착지를 선택해 항공권과 호텔을 검색하세요.</p>
+  <p>자연어로 여행 요청을 입력하세요 (예: "인천에서 도쿄 왕복 2박3일 최저가 항공편과 호텔 찾아줘").</p>
   
   <div class="card">
-    <h2>항공권 검색</h2>
-    <label>출발지:</label>
-    <input type="text" id="origin" placeholder="예: 인천 (ICN)">
-    <br>
-    <label>도착지:</label>
-    <input type="text" id="destination" placeholder="예: 도쿄 (HND)">
-    <br>
-    <label>출발일:</label>
-    <input type="date" id="depart-date">
-    <br>
-    <label>귀국일:</label>
-    <input type="date" id="return-date">
-    <br><br>
-    <button onclick="searchFlights()">항공권 조회</button>
-    <div id="flight-results"></div>
-  </div>
-
-  <div class="card">
-    <h2>호텔 검색</h2>
-    <label>도시:</label>
-    <input type="text" id="hotel-city" placeholder="예: 도쿄">
-    <br>
-    <label>체크인:</label>
-    <input type="date" id="checkin-date">
-    <br>
-    <label>체크아웃:</label>
-    <input type="date" id="checkout-date">
-    <br><br>
-    <button onclick="searchHotels()">호텔 조회</button>
-    <div id="hotel-results"></div>
+    <textarea id="user-request" placeholder="여행 요청을 입력하세요..."></textarea>
+    <button onclick="processRequest()">검색하기</button>
+    <div id="results"></div>
   </div>
 
   <script>
-    // 항공권 검색 (샘플 mock 데이터)
-    async function searchFlights() {
-      const origin = document.getElementById("origin").value || "인천 (ICN)";
-      const destination = document.getElementById("destination").value || "도쿄 (HND)";
-      const depart = document.getElementById("depart-date").value || "2025-10-01";
-      const ret = document.getElementById("return-date").value || "2025-10-03";
+    // 간단한 자연어 파싱 함수 (실제는 GPT 같은 LLM 연결 가능)
+    function parseRequest(text) {
+      const originMatch = text.match(/인천|서울|김포|부산|제주/);
+      const destinationMatch = text.match(/도쿄|오사카|뉴욕|파리|런던/);
+      const nightsMatch = text.match(/(\d)박/);
+      const daysMatch = text.match(/(\d)일/);
 
-      const flightResults = document.getElementById("flight-results");
-      flightResults.innerHTML = "<p>검색 중...</p>";
-
-      // 실제 API 연동 시 fetch() 사용
-      // fetch(`https://api.amadeus.com/v2/shopping/flight-offers?originLocationCode=${origin}&destinationLocationCode=${destination}&departureDate=${depart}&returnDate=${ret}`, { headers: { Authorization: "Bearer API_KEY" } })
-
-      const mockFlights = [
-        { airline: "대한항공", price: "₩450,000", time: `${origin} ${depart} → ${destination}` },
-        { airline: "아시아나항공", price: "₩390,000", time: `${origin} ${depart} → ${destination}` }
-      ];
-
-      flightResults.innerHTML = mockFlights.map(f => `
-        <p>🛫 ${f.airline} | ${f.time} | ${f.price}</p>
-      `).join("");
+      return {
+        origin: originMatch ? originMatch[0] : "인천",
+        destination: destinationMatch ? destinationMatch[0] : "도쿄",
+        nights: nightsMatch ? parseInt(nightsMatch[1]) : 2,
+        days: daysMatch ? parseInt(daysMatch[1]) : 3,
+        departDate: "2025-10-01",
+        returnDate: "2025-10-03"
+      };
     }
 
-    // 호텔 검색 (샘플 mock 데이터)
-    async function searchHotels() {
-      const city = document.getElementById("hotel-city").value || "도쿄";
-      const checkin = document.getElementById("checkin-date").value || "2025-10-01";
-      const checkout = document.getElementById("checkout-date").value || "2025-10-03";
+    function processRequest() {
+      const text = document.getElementById("user-request").value;
+      const query = parseRequest(text);
+      const resultsDiv = document.getElementById("results");
+      resultsDiv.innerHTML = `<p>검색 요청: ${query.origin} → ${query.destination}, ${query.nights}박 ${query.days}일</p>`;
 
-      const hotelResults = document.getElementById("hotel-results");
-      hotelResults.innerHTML = "<p>검색 중...</p>";
-
-      // 실제 API 연동 시 fetch() 사용
-      // fetch(`https://booking-com.p.rapidapi.com/v1/hotels/search?city=${city}&checkin_date=${checkin}&checkout_date=${checkout}`, { headers: { "X-RapidAPI-Key": "API_KEY" } })
-
-      const mockHotels = [
-        { name: `${city} 시티 호텔`, price: "₩120,000 / 박", rating: "⭐ 4.5" },
-        { name: `${city} 비즈니스 호텔`, price: "₩90,000 / 박", rating: "⭐ 4.0" }
+      // 가짜 항공권 데이터
+      const flights = [
+        { type: "최저가", airline: "아시아나", price: 350000, duration: "2시간20분", stops: 0 },
+        { type: "최단시간", airline: "대한항공", price: 420000, duration: "2시간05분", stops: 0 },
+        { type: "최소환승", airline: "ANA", price: 480000, duration: "2시간30분", stops: 0 }
       ];
 
-      hotelResults.innerHTML = mockHotels.map(h => `
-        <p>🏨 ${h.name} | ${h.price} | ${h.rating}</p>
-      `).join("");
+      // 가짜 호텔 데이터
+      const hotels = [
+        { type: "최저가", name: "도쿄 캡슐호텔", price: 70000, rating: "⭐3.5" },
+        { type: "가성비", name: "신주쿠 비즈니스 호텔", price: 90000, rating: "⭐4.0" },
+        { type: "최고평점", name: "도쿄 시티 호텔", price: 130000, rating: "⭐4.7" }
+      ];
+
+      resultsDiv.innerHTML += "<h3>🛫 항공권 추천</h3>";
+      resultsDiv.innerHTML += flights.map(f =>
+        `<p>[${f.type}] ${f.airline} | ${f.duration} | ₩${f.price.toLocaleString()} | 환승 ${f.stops}회</p>`
+      ).join("");
+
+      resultsDiv.innerHTML += "<h3>🏨 호텔 추천</h3>";
+      resultsDiv.innerHTML += hotels.map(h =>
+        `<p>[${h.type}] ${h.name} | ₩${h.price.toLocaleString()} / 박 | ${h.rating}</p>`
+      ).join("");
     }
   </script>
 </body>
